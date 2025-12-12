@@ -3,7 +3,7 @@ import { type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { startScheduler } from "./scheduler";
-import { sendSms, checkSmsStatus, mapSmsStatusToNotificationStatus } from "./smsService";
+import { sendSms, checkSmsStatus, mapSmsStatusToNotificationStatus, getBalance, getErrorDescription } from "./smsService";
 import {
   insertStaffGroupSchema,
   insertParticipantSchema,
@@ -351,15 +351,20 @@ export async function registerRoutes(
               staffGroupId: staffGroupId || participant.staffGroupId,
               notificationId: notification.id,
               action: "sms_sent",
-              details: `SMS sent to ${participant.fullName} (${participant.phone})`,
+              details: `SMS отправлено: ${participant.fullName} (${participant.phone}) - ${getErrorDescription("0")}`,
               result: "success",
+              apiRequest: smsResult.request,
               apiResponse: smsResult.response,
             });
 
             results.push({ participantId, success: true, smsId: smsResult.smsId });
           } else {
+            const errorDesc = smsResult.errCode 
+              ? getErrorDescription(smsResult.errCode)
+              : smsResult.error || "Неизвестная ошибка";
+
             await storage.updateNotificationStatus(notification.id, "error", {
-              errorMessage: smsResult.error,
+              errorMessage: errorDesc,
               apiResponse: smsResult.response,
             });
 
@@ -368,13 +373,14 @@ export async function registerRoutes(
               staffGroupId: staffGroupId || participant.staffGroupId,
               notificationId: notification.id,
               action: "sms_send_failed",
-              details: `Failed to send SMS to ${participant.fullName}`,
+              details: errorDesc,
               result: "error",
-              errorMessage: smsResult.error,
+              errorMessage: errorDesc,
+              apiRequest: smsResult.request,
               apiResponse: smsResult.response,
             });
 
-            results.push({ participantId, success: false, error: smsResult.error });
+            results.push({ participantId, success: false, error: errorDesc });
           }
         }
       }
@@ -507,6 +513,21 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching stats:", error);
       res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // ===== Balance =====
+  app.get("/api/balance", isAuthenticated, async (req, res) => {
+    try {
+      const result = await getBalance();
+      if (result.success) {
+        res.json({ balance: result.balance });
+      } else {
+        res.status(500).json({ message: result.error || "Failed to get balance" });
+      }
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+      res.status(500).json({ message: "Failed to fetch balance" });
     }
   });
 

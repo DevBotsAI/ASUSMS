@@ -24,27 +24,40 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   FileText,
   Search,
   Calendar as CalendarIcon,
   Filter,
   Download,
   RefreshCw,
+  Info,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import type { EventLogWithDetails, StaffGroup } from "@shared/schema";
 
 const actionLabels: Record<string, string> = {
-  sms_sent: "SMS отправлено",
-  sms_scheduled: "SMS запланировано",
-  sms_delivered: "SMS доставлено",
-  sms_error: "Ошибка отправки",
-  participant_added: "Участник добавлен",
-  participant_deleted: "Участник удалён",
-  participant_updated: "Участник обновлён",
-  group_created: "Штаб создан",
-  group_deleted: "Штаб удалён",
+  sms_sent: "Отправка SMS",
+  sms_send_failed: "Ошибка отправки",
+  sms_scheduled: "Планирование SMS",
+  sms_delivered: "Доставлено",
+  sms_error: "Ошибка доставки",
+  sms_status_updated: "Статус обновлён",
+  participant_added: "Добавление участника",
+  participant_created: "Добавление участника",
+  participant_deleted: "Удаление участника",
+  participant_updated: "Изменение участника",
+  participants_imported: "Импорт участников",
+  staff_group_created: "Создание штаба",
+  staff_group_updated: "Изменение штаба",
+  staff_group_deleted: "Удаление штаба",
+  group_created: "Создание штаба",
+  group_deleted: "Удаление штаба",
   import_completed: "Импорт завершён",
 };
 
@@ -299,10 +312,43 @@ export default function EventLogs() {
                           <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {log.details || log.errorMessage || (
-                          <span className="text-muted-foreground">—</span>
-                        )}
+                      <TableCell className="max-w-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate">
+                            {log.details || log.errorMessage || (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </span>
+                          {(log.apiRequest || log.apiResponse) && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="shrink-0 cursor-help p-1" data-testid={`button-api-details-${log.id}`}>
+                                  <Info className="w-3.5 h-3.5 text-muted-foreground" />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="left" className="max-w-md">
+                                <div className="text-xs space-y-2">
+                                  {log.apiRequest && (
+                                    <div>
+                                      <div className="font-semibold">Запрос:</div>
+                                      <pre className="whitespace-pre-wrap break-all bg-muted/50 p-1 rounded text-xs">
+                                        {log.apiRequest}
+                                      </pre>
+                                    </div>
+                                  )}
+                                  {log.apiResponse && (
+                                    <div>
+                                      <div className="font-semibold">Ответ:</div>
+                                      <pre className="whitespace-pre-wrap break-all bg-muted/50 p-1 rounded text-xs">
+                                        {log.apiResponse}
+                                      </pre>
+                                    </div>
+                                  )}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {log.result ? (

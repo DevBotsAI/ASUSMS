@@ -175,7 +175,10 @@ export function ParticipantTable({
                 {participant.lastNotification ? (
                   <StatusBadge status={participant.lastNotification.status} />
                 ) : (
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-gray-600" />
+                    <span className="text-sm text-muted-foreground">Нет отправок</span>
+                  </div>
                 )}
               </TableCell>
               <TableCell>

@@ -17,6 +17,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { refreshBalanceAfterSms } from "@/components/system-status";
 import { Send, Calendar as CalendarIcon, Clock, User, FileText, X } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -82,6 +83,7 @@ export function SmsDialog({
           queryKey: ["/api/staff-groups", staffGroupId, "participants"],
         });
       }
+      refreshBalanceAfterSms();
       onOpenChange(false);
       toast({
         title: isScheduled ? "SMS запланировано" : "SMS отправлено",

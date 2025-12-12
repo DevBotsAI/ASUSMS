@@ -1,5 +1,8 @@
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Activity, CheckCircle, AlertCircle, Clock, Wallet, RefreshCw } from "lucide-react";
+import { queryClient } from "@/lib/queryClient";
 
 interface SystemStatusProps {
   currentAction?: string;
@@ -7,6 +10,23 @@ interface SystemStatusProps {
 }
 
 export function SystemStatus({ currentAction, isProcessing = false }: SystemStatusProps) {
+  const { data: balanceData, isLoading, isError, refetch } = useQuery<{ balance: number }>({
+    queryKey: ["/api/balance"],
+    queryFn: async () => {
+      const res = await fetch("/api/balance", { credentials: "include" });
+      if (!res.ok) {
+        throw new Error("Failed to fetch balance");
+      }
+      return res.json();
+    },
+    refetchInterval: 60000,
+    retry: 1,
+  });
+
+  const handleRefreshBalance = () => {
+    refetch();
+  };
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -15,7 +35,7 @@ export function SystemStatus({ currentAction, isProcessing = false }: SystemStat
           Статус системы
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3">
         <div className="flex items-center gap-2">
           {isProcessing ? (
             <>
@@ -32,6 +52,31 @@ export function SystemStatus({ currentAction, isProcessing = false }: SystemStat
               </span>
             </>
           )}
+        </div>
+        
+        <div className="flex items-center justify-between gap-2 pt-2 border-t">
+          <div className="flex items-center gap-2">
+            <Wallet className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Баланс:</span>
+            {isLoading ? (
+              <span className="text-sm font-medium">Загрузка...</span>
+            ) : isError ? (
+              <span className="text-sm font-medium text-destructive">Ошибка</span>
+            ) : (
+              <span className="text-sm font-semibold" data-testid="text-balance">
+                {balanceData?.balance?.toFixed(2) ?? "—"} руб.
+              </span>
+            )}
+          </div>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={handleRefreshBalance}
+            disabled={isLoading}
+            data-testid="button-refresh-balance"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -67,4 +112,8 @@ export function StatsCard({ title, value, icon }: StatsCardProps) {
       </CardContent>
     </Card>
   );
+}
+
+export function refreshBalanceAfterSms() {
+  queryClient.invalidateQueries({ queryKey: ["/api/balance"] });
 }

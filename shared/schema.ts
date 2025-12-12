@@ -125,6 +125,7 @@ export const eventLogs = pgTable("event_logs", {
   details: text("details"),
   result: text("result"),
   errorMessage: text("error_message"),
+  apiRequest: text("api_request"),
   apiResponse: text("api_response"),
   createdAt: timestamp("created_at").defaultNow(),
 });
