@@ -186,7 +186,30 @@ export default function StaffDetail() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-4">
+        <div className="flex-1 overflow-auto p-4 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <StatsCard
+              title="Всего участников"
+              value={stats?.total ?? participants.length}
+              icon="total"
+            />
+            <StatsCard
+              title="Доставлено сегодня"
+              value={stats?.delivered ?? 0}
+              icon="delivered"
+            />
+            <StatsCard
+              title="Запланировано"
+              value={stats?.scheduled ?? 0}
+              icon="scheduled"
+            />
+            <StatsCard
+              title="Ошибки"
+              value={stats?.error ?? 0}
+              icon="error"
+            />
+          </div>
+
           <ParticipantTable
             participants={participants}
             isLoading={isLoadingParticipants}
