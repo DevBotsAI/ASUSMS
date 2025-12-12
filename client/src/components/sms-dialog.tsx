@@ -15,16 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Send, Calendar as CalendarIcon, Clock, User, FileText } from "lucide-react";
+import { Send, Calendar as CalendarIcon, Clock, User, FileText, X } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import type { Participant, MessageTemplate } from "@shared/schema";
@@ -54,10 +47,11 @@ export function SmsDialog({
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
   const [scheduledTime, setScheduledTime] = useState("12:00");
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [localParticipants, setLocalParticipants] = useState<Participant[]>(participants);
 
   const { data: templates = [] } = useQuery<MessageTemplate[]>({
-    queryKey: ["/api/message-templates", staffGroupId],
-    enabled: !!staffGroupId,
+    queryKey: [`/api/message-templates?staffGroupId=${staffGroupId}`],
+    enabled: !!staffGroupId && open,
   });
 
   useEffect(() => {
@@ -67,8 +61,9 @@ export function SmsDialog({
       setScheduledDate(undefined);
       setScheduledTime("12:00");
       setSelectedTemplate("");
+      setLocalParticipants(participants);
     }
-  }, [open, initialScheduled]);
+  }, [open, initialScheduled, participants]);
 
   const sendMutation = useMutation({
     mutationFn: async (data: {
@@ -106,11 +101,12 @@ export function SmsDialog({
 
   const handleSend = () => {
     if (!message.trim()) return;
+    if (mode === "mass" && localParticipants.length === 0) return;
 
     const participantIds =
       mode === "single" && participant
         ? [participant.id]
-        : participants.map((p) => p.id);
+        : localParticipants.map((p) => p.id);
 
     let scheduledAt: string | undefined;
     if (isScheduled && scheduledDate) {
@@ -128,15 +124,16 @@ export function SmsDialog({
     });
   };
 
-  const handleTemplateSelect = (templateId: string) => {
-    setSelectedTemplate(templateId);
-    const template = templates.find((t) => t.id === templateId);
-    if (template) {
-      setMessage(template.content);
-    }
+  const handleTemplateClick = (template: MessageTemplate) => {
+    setMessage(template.content);
+    setSelectedTemplate(template.id);
   };
 
-  const recipientCount = mode === "single" ? 1 : participants.length;
+  const handleRemoveParticipant = (participantId: string) => {
+    setLocalParticipants((prev) => prev.filter((p) => p.id !== participantId));
+  };
+
+  const recipientCount = mode === "single" ? 1 : localParticipants.length;
   const charCount = message.length;
   const smsCount = Math.ceil(charCount / 70) || 1;
 
@@ -169,47 +166,52 @@ export function SmsDialog({
             </div>
           )}
 
-          {mode === "mass" && participants.length > 0 && (
-            <div className="p-3 rounded-lg bg-muted/50 max-h-32 overflow-y-auto">
+          {mode === "mass" && localParticipants.length > 0 && (
+            <div className="p-3 rounded-lg bg-muted/50 max-h-40 overflow-y-auto">
               <div className="text-sm font-medium mb-2">
-                Получатели ({participants.length}):
+                Получатели ({localParticipants.length}):
               </div>
               <div className="flex flex-wrap gap-1">
-                {participants.slice(0, 10).map((p) => (
+                {localParticipants.map((p) => (
                   <span
                     key={p.id}
-                    className="text-xs bg-background px-2 py-1 rounded"
+                    className="inline-flex items-center gap-1 text-xs bg-background px-2 py-1 rounded group"
+                    data-testid={`recipient-${p.id}`}
                   >
                     {p.fullName}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveParticipant(p.id)}
+                      className="text-muted-foreground hover:text-destructive transition-colors"
+                      data-testid={`button-remove-recipient-${p.id}`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
                   </span>
                 ))}
-                {participants.length > 10 && (
-                  <span className="text-xs text-muted-foreground">
-                    и ещё {participants.length - 10}...
-                  </span>
-                )}
               </div>
             </div>
           )}
 
           {templates.length > 0 && (
             <div className="space-y-2">
-              <Label>Шаблон сообщения</Label>
-              <Select value={selectedTemplate} onValueChange={handleTemplateSelect}>
-                <SelectTrigger data-testid="select-template">
-                  <SelectValue placeholder="Выберите шаблон" />
-                </SelectTrigger>
-                <SelectContent>
-                  {templates.map((template) => (
-                    <SelectItem key={template.id} value={template.id}>
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4" />
-                        {template.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Шаблоны сообщений</Label>
+              <div className="flex flex-wrap gap-2">
+                {templates.map((template) => (
+                  <Button
+                    key={template.id}
+                    type="button"
+                    variant={selectedTemplate === template.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleTemplateClick(template)}
+                    className="gap-1.5"
+                    data-testid={`button-template-${template.id}`}
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    {template.name}
+                  </Button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -292,7 +294,8 @@ export function SmsDialog({
             disabled={
               !message.trim() ||
               sendMutation.isPending ||
-              (isScheduled && !scheduledDate)
+              (isScheduled && !scheduledDate) ||
+              (mode === "mass" && localParticipants.length === 0)
             }
             data-testid="button-send-sms"
           >

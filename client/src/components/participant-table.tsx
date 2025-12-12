@@ -136,7 +136,7 @@ export function ParticipantTable({
             </TableHead>
             <TableHead>ФИО</TableHead>
             <TableHead className="w-40">Телефон</TableHead>
-            <TableHead className="w-32">Статус</TableHead>
+            <TableHead className="w-40">Статус отправки</TableHead>
             <TableHead className="w-48">Последнее уведомление</TableHead>
             <TableHead className="w-12"></TableHead>
           </TableRow>
