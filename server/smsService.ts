@@ -53,15 +53,17 @@ export async function sendSms(phone: string, message: string): Promise<SmsResult
 
     const data = response.data;
     
-    if (data && data.response && data.response.msg) {
+    if (data && data.response) {
       const msgData = data.response.msg;
-      if (msgData.err_code === "0" || msgData.err_code === 0) {
+      const respData = data.response.data;
+      
+      if (msgData && (msgData.err_code === "0" || msgData.err_code === 0)) {
         return {
           success: true,
-          smsId: msgData.id?.toString(),
+          smsId: respData?.id?.toString(),
           response: JSON.stringify(data),
         };
-      } else {
+      } else if (msgData) {
         return {
           success: false,
           error: msgData.text || `Error code: ${msgData.err_code}`,

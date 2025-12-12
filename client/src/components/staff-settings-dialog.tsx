@@ -98,7 +98,7 @@ export function StaffSettingsDialog({
   }, [open, staffGroup, form]);
 
   const { data: templates = [] } = useQuery<MessageTemplate[]>({
-    queryKey: ["/api/message-templates", staffGroup.id],
+    queryKey: [`/api/message-templates?staffGroupId=${staffGroup.id}`],
     enabled: open,
   });
 
@@ -152,7 +152,7 @@ export function StaffSettingsDialog({
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/message-templates", staffGroup.id] });
+      queryClient.invalidateQueries({ queryKey: [`/api/message-templates?staffGroupId=${staffGroup.id}`] });
       setIsAddingTemplate(false);
       templateForm.reset();
       toast({ title: "Шаблон создан" });
@@ -174,7 +174,7 @@ export function StaffSettingsDialog({
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/message-templates", staffGroup.id] });
+      queryClient.invalidateQueries({ queryKey: [`/api/message-templates?staffGroupId=${staffGroup.id}`] });
       setEditingTemplate(null);
       templateForm.reset();
       toast({ title: "Шаблон обновлён" });
@@ -193,7 +193,7 @@ export function StaffSettingsDialog({
       return await apiRequest("DELETE", `/api/message-templates/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/message-templates", staffGroup.id] });
+      queryClient.invalidateQueries({ queryKey: [`/api/message-templates?staffGroupId=${staffGroup.id}`] });
       toast({ title: "Шаблон удалён" });
     },
     onError: () => {

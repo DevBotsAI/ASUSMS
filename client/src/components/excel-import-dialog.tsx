@@ -94,15 +94,33 @@ export function ExcelImportDialog({
         const jsonData = XLSX.utils.sheet_to_json<Record<string, any>>(firstSheet);
 
         const parsed: ParsedParticipant[] = jsonData.map((row) => {
-          const fullName =
-            row["ФИО"] || row["Имя"] || row["Name"] || row["fullName"] || "";
-          const phone =
-            row["Телефон"] || row["Phone"] || row["phone"] || row["Номер"] || "";
-          const position =
-            row["Должность"] || row["Position"] || row["position"] || "";
+          // Try to find values using various common column names (case-insensitive)
+          const keys = Object.keys(row);
+          
+          const findValue = (patterns: string[]): string => {
+            for (const pattern of patterns) {
+              const key = keys.find(k => k.toLowerCase().includes(pattern.toLowerCase()));
+              if (key && row[key] !== undefined && row[key] !== null) {
+                return String(row[key]).trim();
+              }
+            }
+            return "";
+          };
+          
+          // Also try first 3 columns as fallback (A=Name, B=Phone, C=Position)
+          const columnValues = keys.slice(0, 3).map(k => row[k]);
+          
+          let fullName = findValue(["ФИО", "фио", "Имя", "имя", "Name", "name", "fullName", "FullName", "Ф.И.О", "ф.и.о"]);
+          let phone = findValue(["Телефон", "телефон", "Phone", "phone", "Номер", "номер", "Тел", "тел", "Mobile", "mobile"]);
+          let position = findValue(["Должность", "должность", "Position", "position", "Позиция", "позиция", "Роль", "роль", "Role", "role"]);
+          
+          // Fallback to positional columns if named columns not found
+          if (!fullName && columnValues[0]) fullName = String(columnValues[0]).trim();
+          if (!phone && columnValues[1]) phone = String(columnValues[1]).trim();
+          if (!position && columnValues[2]) position = String(columnValues[2]).trim();
 
-          const isValidName = fullName.trim().length >= 2;
-          const isValidPhone = phone.toString().replace(/\D/g, "").length >= 10;
+          const isValidName = fullName.length >= 2;
+          const isValidPhone = phone.replace(/\D/g, "").length >= 10;
 
           let error: string | undefined;
           if (!isValidName) error = "Некорректное ФИО";
