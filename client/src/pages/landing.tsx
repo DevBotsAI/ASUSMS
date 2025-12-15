@@ -1,28 +1,19 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { MessageSquare, Users, Clock, Shield, LogIn, Loader2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 
 export default function Landing() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
   const loginMutation = useMutation({
-    mutationFn: async (data: { username: string; password: string }) => {
+    mutationFn: async () => {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(data),
       });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || "Ошибка входа");
+        throw new Error("Ошибка входа");
       }
       return res.json();
     },
@@ -30,15 +21,10 @@ export default function Landing() {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       window.location.reload();
     },
-    onError: (err: Error) => {
-      setError(err.message);
-    },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    loginMutation.mutate({ username, password });
+  const handleLogin = () => {
+    loginMutation.mutate();
   };
 
   return (
@@ -65,52 +51,24 @@ export default function Landing() {
                 <CardHeader className="text-center">
                   <CardTitle className="text-xl">Вход в систему</CardTitle>
                   <CardDescription>
-                    Введите логин и пароль для доступа
+                    Нажмите кнопку для входа в систему управления оповещениями
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="username">Логин</Label>
-                      <Input
-                        id="username"
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        placeholder="Введите логин"
-                        required
-                        data-testid="input-username"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Пароль</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Введите пароль"
-                        required
-                        data-testid="input-password"
-                      />
-                    </div>
-                    {error && (
-                      <p className="text-sm text-destructive" data-testid="text-error">{error}</p>
+                  <Button
+                    onClick={handleLogin}
+                    className="w-full"
+                    size="lg"
+                    disabled={loginMutation.isPending}
+                    data-testid="button-login"
+                  >
+                    {loginMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <LogIn className="w-4 h-4 mr-2" />
                     )}
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={loginMutation.isPending}
-                      data-testid="button-login"
-                    >
-                      {loginMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <LogIn className="w-4 h-4 mr-2" />
-                      )}
-                      Войти
-                    </Button>
-                  </form>
+                    Войти
+                  </Button>
                 </CardContent>
               </Card>
             </div>
