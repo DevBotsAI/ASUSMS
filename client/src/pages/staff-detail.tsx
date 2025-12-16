@@ -229,6 +229,8 @@ export default function StaffDetail() {
               title="Запланировано"
               value={stats?.scheduled ?? 0}
               icon="scheduled"
+              onReset={() => resetMutation.mutate("scheduled")}
+              isResetting={resetMutation.isPending}
             />
             <StatsCard
               title="Ошибки"

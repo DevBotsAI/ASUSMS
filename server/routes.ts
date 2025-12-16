@@ -545,8 +545,8 @@ export async function registerRoutes(
       const { status } = req.params;
       const { staffGroupId } = req.query;
       
-      if (!["delivered", "error"].includes(status)) {
-        return res.status(400).json({ message: "Invalid status. Only 'delivered' or 'error' can be reset." });
+      if (!["delivered", "error", "scheduled"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status. Only 'delivered', 'error' or 'scheduled' can be reset." });
       }
 
       const count = await storage.deleteNotificationsByStatus(
