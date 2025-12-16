@@ -15,9 +15,15 @@ interface RecentActivityProps {
 const actionIcons: Record<string, typeof Send> = {
   sms_sent: Send,
   sms_scheduled: Send,
+  sms_delivered: Send,
+  sms_error: AlertCircle,
   participant_added: UserPlus,
+  participant_created: UserPlus,
   participant_deleted: Users,
+  participant_updated: UserPlus,
+  participants_imported: Users,
   group_created: Users,
+  staff_group_created: Users,
   error: AlertCircle,
 };
 
@@ -27,20 +33,28 @@ const actionLabels: Record<string, string> = {
   sms_delivered: "SMS доставлено",
   sms_error: "Ошибка отправки",
   participant_added: "Участник добавлен",
+  participant_created: "Участник добавлен",
   participant_deleted: "Участник удалён",
   participant_updated: "Участник обновлён",
+  participants_imported: "Импорт участников",
   group_created: "Штаб создан",
+  staff_group_created: "Штаб создан",
   group_deleted: "Штаб удалён",
   import_completed: "Импорт завершён",
 };
 
 export function RecentActivity({ staffGroupId, limit = 10 }: RecentActivityProps) {
-  const queryKey = staffGroupId
-    ? ["/api/event-logs", staffGroupId]
-    : ["/api/event-logs"];
+  const url = staffGroupId
+    ? `/api/event-logs?staffGroupId=${staffGroupId}&limit=${limit}`
+    : `/api/event-logs?limit=${limit}`;
 
   const { data: logs = [], isLoading } = useQuery<EventLogWithDetails[]>({
-    queryKey,
+    queryKey: ["/api/event-logs", { staffGroupId, limit }],
+    queryFn: async () => {
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch event logs");
+      return res.json();
+    },
     refetchInterval: 10000,
   });
 
