@@ -3,7 +3,7 @@ import axios from "axios";
 
 const SMS_API_URL = "https://ssl.bs00.ru";
 const SMS_API_KEY = process.env.SMS_API_KEY || "";
-const SMS_SENDER = process.env.SMS_SENDER || "ASU-MINENERGO";
+const SMS_SENDER = process.env.SMS_SENDER || "MINENERGO";
 
 export interface SmsResult {
   success: boolean;
