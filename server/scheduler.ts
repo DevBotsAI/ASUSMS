@@ -29,8 +29,9 @@ export function startScheduler() {
         const result = await sendSms(participant.phone, notification.message);
 
         if (result.success) {
-          await storage.updateNotificationStatus(notification.id, "sending", {
+          await storage.updateNotificationStatus(notification.id, "delivered", {
             sentAt: new Date(),
+            deliveredAt: new Date(),
             smsId: result.smsId,
             apiResponse: result.response,
           });
@@ -39,8 +40,8 @@ export function startScheduler() {
             participantId: notification.participantId,
             staffGroupId: notification.staffGroupId,
             notificationId: notification.id,
-            action: "sms_sent",
-            details: `Scheduled SMS sent to ${participant.fullName} (${participant.phone})`,
+            action: "sms_delivered",
+            details: `SMS доставлено: ${participant.fullName} (${participant.phone})`,
             result: "success",
             apiResponse: result.response,
           });
