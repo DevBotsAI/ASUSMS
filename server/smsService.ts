@@ -1,7 +1,7 @@
 // SMS-PROSTO API integration
 import axios from "axios";
 
-const SMS_API_URL = "https://ssl.bs00.ru";
+const SMS_API_URL = "http://api.sms-prosto.ru";
 const SMS_API_KEY = process.env.SMS_API_KEY || "";
 const SMS_SENDER = process.env.SMS_SENDER || "ASU-MINENERGO";
 
@@ -221,7 +221,7 @@ export interface BalanceResult {
 export async function getBalance(): Promise<BalanceResult> {
   try {
     const params = new URLSearchParams({
-      method: "get_profile",
+      method: "get_balance",
       key: SMS_API_KEY,
       format: "json",
     });
@@ -239,7 +239,7 @@ export async function getBalance(): Promise<BalanceResult> {
       if (msgData && (msgData.err_code === "0" || msgData.err_code === 0)) {
         return {
           success: true,
-          balance: parseFloat(respData?.credits || "0"),
+          balance: parseFloat(respData?.balance || respData?.credits || "0"),
         };
       } else if (msgData) {
         return {
