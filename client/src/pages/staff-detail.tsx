@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ParticipantTable } from "@/components/participant-table";
@@ -9,6 +9,8 @@ import { ExcelImportDialog } from "@/components/excel-import-dialog";
 import { StaffSettingsDialog } from "@/components/staff-settings-dialog";
 import { SystemStatus, StatsCard } from "@/components/system-status";
 import { RecentActivity } from "@/components/recent-activity";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import {
   UserPlus,
   Send,
@@ -33,6 +35,7 @@ interface StaffStats {
 export default function StaffDetail() {
   const params = useParams<{ id: string }>();
   const staffGroupId = params.id!;
+  const { toast } = useToast();
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [participantDialogOpen, setParticipantDialogOpen] = useState(false);
@@ -56,9 +59,31 @@ export default function StaffDetail() {
     refetchInterval: 10000,
   });
 
-  const { data: stats } = useQuery<StaffStats>({
+  const { data: stats, refetch: refetchStats } = useQuery<StaffStats>({
     queryKey: ["/api/staff-groups", staffGroupId, "stats"],
     refetchInterval: 10000,
+  });
+
+  const resetMutation = useMutation({
+    mutationFn: async (status: string) => {
+      return apiRequest("DELETE", `/api/notifications/reset/${status}?staffGroupId=${staffGroupId}`);
+    },
+    onSuccess: () => {
+      refetchStats();
+      queryClient.invalidateQueries({ queryKey: ["/api/event-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/staff-groups", staffGroupId, "participants"] });
+      toast({
+        title: "Счётчик сброшен",
+        description: "Статистика штаба обновлена",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось сбросить счётчик",
+        variant: "destructive",
+      });
+    },
   });
 
   useEffect(() => {
@@ -197,6 +222,8 @@ export default function StaffDetail() {
               title="Доставлено сегодня"
               value={stats?.delivered ?? 0}
               icon="delivered"
+              onReset={() => resetMutation.mutate("delivered")}
+              isResetting={resetMutation.isPending}
             />
             <StatsCard
               title="Запланировано"
@@ -207,6 +234,8 @@ export default function StaffDetail() {
               title="Ошибки"
               value={stats?.error ?? 0}
               icon="error"
+              onReset={() => resetMutation.mutate("error")}
+              isResetting={resetMutation.isPending}
             />
           </div>
 

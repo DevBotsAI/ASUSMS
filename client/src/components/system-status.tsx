@@ -87,6 +87,9 @@ interface StatsCardProps {
   title: string;
   value: number;
   icon: "total" | "delivered" | "error" | "scheduled";
+  onReset?: () => void;
+  resetLabel?: string;
+  isResetting?: boolean;
 }
 
 const iconMap = {
@@ -96,18 +99,30 @@ const iconMap = {
   scheduled: { Icon: Clock, color: "text-gray-500" },
 };
 
-export function StatsCard({ title, value, icon }: StatsCardProps) {
+export function StatsCard({ title, value, icon, onReset, resetLabel = "Сбросить", isResetting }: StatsCardProps) {
   const { Icon, color } = iconMap[icon];
   
   return (
     <Card>
       <CardContent className="p-4">
         <div className="flex items-center justify-between gap-2">
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="text-xs text-muted-foreground">{title}</p>
             <p className="text-2xl font-bold">{value}</p>
+            {onReset && value > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onReset}
+                disabled={isResetting}
+                className="mt-1 h-6 px-2 text-xs text-muted-foreground"
+                data-testid={`button-reset-${icon}`}
+              >
+                {isResetting ? "..." : resetLabel}
+              </Button>
+            )}
           </div>
-          <Icon className={`w-8 h-8 ${color} opacity-80`} />
+          <Icon className={`w-8 h-8 ${color} opacity-80 flex-shrink-0`} />
         </div>
       </CardContent>
     </Card>

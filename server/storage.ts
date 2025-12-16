@@ -76,6 +76,9 @@ export interface IStorage {
     totalNotificationsSent: number;
     totalNotificationsDelivered: number;
   }>;
+
+  // Reset notifications
+  deleteNotificationsByStatus(status: string, staffGroupId?: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -463,6 +466,21 @@ export class DatabaseStorage implements IStorage {
       totalNotificationsSent: sentCount?.count ?? 0,
       totalNotificationsDelivered: deliveredCount?.count ?? 0,
     };
+  }
+
+  async deleteNotificationsByStatus(status: string, staffGroupId?: string): Promise<number> {
+    let condition;
+    if (staffGroupId) {
+      condition = and(
+        eq(notifications.status, status),
+        eq(notifications.staffGroupId, staffGroupId)
+      );
+    } else {
+      condition = eq(notifications.status, status);
+    }
+    
+    const deleted = await db.delete(notifications).where(condition).returning();
+    return deleted.length;
   }
 }
 

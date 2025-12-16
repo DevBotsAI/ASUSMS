@@ -1,10 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatsCard, SystemStatus } from "@/components/system-status";
 import { RecentActivity } from "@/components/recent-activity";
 import { Link } from "wouter";
 import { Users, MessageSquare, CheckCircle, AlertCircle, Clock, ArrowRight } from "lucide-react";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { StaffGroupWithParticipants } from "@shared/schema";
 
 interface DashboardStats {
@@ -16,12 +18,35 @@ interface DashboardStats {
 }
 
 export default function Dashboard() {
+  const { toast } = useToast();
+
   const { data: staffGroups = [] } = useQuery<StaffGroupWithParticipants[]>({
     queryKey: ["/api/staff-groups"],
   });
 
-  const { data: stats } = useQuery<DashboardStats>({
+  const { data: stats, refetch: refetchStats } = useQuery<DashboardStats>({
     queryKey: ["/api/stats"],
+  });
+
+  const resetMutation = useMutation({
+    mutationFn: async (status: string) => {
+      return apiRequest("DELETE", `/api/notifications/reset/${status}`);
+    },
+    onSuccess: () => {
+      refetchStats();
+      queryClient.invalidateQueries({ queryKey: ["/api/event-logs"] });
+      toast({
+        title: "Счётчик сброшен",
+        description: "Статистика успешно обновлена",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось сбросить счётчик",
+        variant: "destructive",
+      });
+    },
   });
 
   const totalParticipants = staffGroups.reduce(
@@ -48,6 +73,8 @@ export default function Dashboard() {
           title="Доставлено сегодня"
           value={stats?.deliveredToday ?? 0}
           icon="delivered"
+          onReset={() => resetMutation.mutate("delivered")}
+          isResetting={resetMutation.isPending}
         />
         <StatsCard
           title="Запланировано"
@@ -58,6 +85,8 @@ export default function Dashboard() {
           title="Ошибки"
           value={stats?.errorCount ?? 0}
           icon="error"
+          onReset={() => resetMutation.mutate("error")}
+          isResetting={resetMutation.isPending}
         />
       </div>
 

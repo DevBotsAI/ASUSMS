@@ -516,6 +516,35 @@ export async function registerRoutes(
     }
   });
 
+  // Reset notifications by status
+  app.delete("/api/notifications/reset/:status", isAuthenticated, async (req, res) => {
+    try {
+      const { status } = req.params;
+      const { staffGroupId } = req.query;
+      
+      if (!["delivered", "error"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status. Only 'delivered' or 'error' can be reset." });
+      }
+
+      const count = await storage.deleteNotificationsByStatus(
+        status, 
+        staffGroupId as string | undefined
+      );
+
+      await storage.createEventLog({
+        staffGroupId: staffGroupId as string || null,
+        action: "notifications_reset",
+        details: `Сброшено ${count} уведомлений со статусом "${status}"`,
+        result: "success",
+      });
+
+      res.json({ success: true, deleted: count });
+    } catch (error) {
+      console.error("Error resetting notifications:", error);
+      res.status(500).json({ message: "Failed to reset notifications" });
+    }
+  });
+
   // ===== Balance =====
   app.get("/api/balance", isAuthenticated, async (req, res) => {
     try {
