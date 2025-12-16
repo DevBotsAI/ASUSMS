@@ -225,30 +225,6 @@ export default function StaffDetail() {
 
       <div className="hidden xl:block w-80 border-l p-4 space-y-4 overflow-auto">
         <SystemStatus />
-
-        <div className="grid grid-cols-2 gap-2">
-          <StatsCard
-            title="Участников"
-            value={stats?.total ?? participants.length}
-            icon="total"
-          />
-          <StatsCard
-            title="Доставлено"
-            value={stats?.delivered ?? 0}
-            icon="delivered"
-          />
-          <StatsCard
-            title="Ошибок"
-            value={stats?.error ?? 0}
-            icon="error"
-          />
-          <StatsCard
-            title="Запланировано"
-            value={stats?.scheduled ?? 0}
-            icon="scheduled"
-          />
-        </div>
-
         <RecentActivity staffGroupId={staffGroupId} limit={10} />
       </div>
 
