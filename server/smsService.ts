@@ -3,7 +3,7 @@ import axios from "axios";
 
 const SMS_API_URL = "http://api.sms-prosto.ru";
 const SMS_API_KEY = process.env.SMS_API_KEY || "";
-const SMS_SENDER = process.env.SMS_SENDER || "MINENERGO";
+const SMS_SENDER = process.env.SMS_SENDER || "ASU-MINENERGO";
 
 export interface SmsResult {
   success: boolean;
@@ -169,13 +169,11 @@ export function mapSmsStatusToNotificationStatus(apiStatus: string): string {
     case "delivered":
       return "delivered";
     case "pending":
-      return "sent";
-    case "sent":
-      return "sent";
+      return "sending";
     case "error":
       return "error";
     default:
-      return "sent";
+      return "sending";
   }
 }
 
@@ -223,7 +221,7 @@ export interface BalanceResult {
 export async function getBalance(): Promise<BalanceResult> {
   try {
     const params = new URLSearchParams({
-      method: "get_profile",
+      method: "get_balance",
       key: SMS_API_KEY,
       format: "json",
     });
@@ -239,10 +237,9 @@ export async function getBalance(): Promise<BalanceResult> {
       const respData = data.response.data;
       
       if (msgData && (msgData.err_code === "0" || msgData.err_code === 0)) {
-        // get_profile returns credits field for balance
         return {
           success: true,
-          balance: parseFloat(respData?.credits || "0"),
+          balance: parseFloat(respData?.balance || respData?.credits || "0"),
         };
       } else if (msgData) {
         return {

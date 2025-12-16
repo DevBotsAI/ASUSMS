@@ -323,29 +323,6 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async getSentNotifications(): Promise<NotificationWithDetails[]> {
-    const notificationsList = await db
-      .select()
-      .from(notifications)
-      .where(eq(notifications.status, "sent"))
-      .orderBy(desc(notifications.createdAt));
-
-    const result: NotificationWithDetails[] = [];
-    for (const notification of notificationsList) {
-      const [participant] = await db
-        .select()
-        .from(participants)
-        .where(eq(participants.id, notification.participantId));
-
-      result.push({
-        ...notification,
-        participant,
-      });
-    }
-
-    return result;
-  }
-
   // Message Template operations
   async getAllMessageTemplates(): Promise<MessageTemplate[]> {
     return db.select().from(messageTemplates).orderBy(messageTemplates.name);
@@ -474,7 +451,7 @@ export class DatabaseStorage implements IStorage {
     const [sentCount] = await db
       .select({ count: drizzleCount() })
       .from(notifications)
-      .where(sql`${notifications.status} IN ('sent', 'sending', 'delivered', 'error')`);
+      .where(sql`${notifications.status} IN ('sending', 'delivered', 'error')`);
     const [deliveredCount] = await db
       .select({ count: drizzleCount() })
       .from(notifications)

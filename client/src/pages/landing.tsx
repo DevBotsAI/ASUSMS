@@ -1,32 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Users, Clock, Shield, LogIn, Loader2 } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
+import { MessageSquare, Users, Clock, Shield, ChevronRight } from "lucide-react";
 
 export default function Landing() {
-  const loginMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
-      if (!res.ok) {
-        throw new Error("Ошибка входа");
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      window.location.reload();
-    },
-  });
-
-  const handleLogin = () => {
-    loginMutation.mutate();
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
@@ -40,42 +16,37 @@ export default function Landing() {
               <p className="text-xs text-muted-foreground">Министерство энергетики</p>
             </div>
           </div>
+          <Button asChild data-testid="button-login">
+            <a href="/api/login">
+              Войти в систему
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </a>
+          </Button>
         </div>
       </header>
 
       <main>
-        <section className="py-12 md:py-20">
+        <section className="py-16 md:py-24">
           <div className="container mx-auto px-6">
-            <div className="max-w-md mx-auto">
-              <Card>
-                <CardHeader className="text-center">
-                  <CardTitle className="text-xl">Вход в систему</CardTitle>
-                  <CardDescription>
-                    Нажмите кнопку для входа в систему управления оповещениями
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    onClick={handleLogin}
-                    className="w-full"
-                    size="lg"
-                    disabled={loginMutation.isPending}
-                    data-testid="button-login"
-                  >
-                    {loginMutation.isPending ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <LogIn className="w-4 h-4 mr-2" />
-                    )}
-                    Войти
-                  </Button>
-                </CardContent>
-              </Card>
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Автоматизированная система уведомлений
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8">
+                Оперативное управление SMS-уведомлениями участников штабов. 
+                Массовые и индивидуальные рассылки, планирование, отслеживание статусов доставки.
+              </p>
+              <Button size="lg" asChild data-testid="button-start">
+                <a href="/api/login">
+                  Начать работу
+                  <ChevronRight className="w-5 h-5 ml-2" />
+                </a>
+              </Button>
             </div>
           </div>
         </section>
 
-        <section className="py-12 bg-muted/30">
+        <section className="py-16 bg-muted/30">
           <div className="container mx-auto px-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card>
@@ -133,6 +104,34 @@ export default function Landing() {
                   </CardDescription>
                 </CardContent>
               </Card>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-16">
+          <div className="container mx-auto px-6 text-center">
+            <h3 className="text-2xl font-semibold mb-4">Статусы доставки в реальном времени</h3>
+            <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Автоматическое обновление статусов каждые 10 секунд. 
+              Цветовая индикация для быстрого контроля доставки сообщений.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 dark:bg-green-900/30">
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <span className="text-sm font-medium text-green-700 dark:text-green-300">Доставлено</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-orange-100 dark:bg-orange-900/30">
+                <div className="w-3 h-3 rounded-full bg-orange-500" />
+                <span className="text-sm font-medium text-orange-700 dark:text-orange-300">В процессе</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-100 dark:bg-red-900/30">
+                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <span className="text-sm font-medium text-red-700 dark:text-red-300">Ошибка</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800">
+                <div className="w-3 h-3 rounded-full bg-gray-400" />
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Запланировано</span>
+              </div>
             </div>
           </div>
         </section>
