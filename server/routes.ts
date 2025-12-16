@@ -340,9 +340,8 @@ export async function registerRoutes(
           const smsResult = await sendSms(participant.phone, message);
 
           if (smsResult.success) {
-            await storage.updateNotificationStatus(notification.id, "delivered", {
+            await storage.updateNotificationStatus(notification.id, "sending", {
               sentAt: new Date(),
-              deliveredAt: new Date(),
               smsId: smsResult.smsId,
               apiResponse: smsResult.response,
             });
@@ -351,8 +350,8 @@ export async function registerRoutes(
               participantId,
               staffGroupId: staffGroupId || participant.staffGroupId,
               notificationId: notification.id,
-              action: "sms_delivered",
-              details: `SMS доставлено: ${participant.fullName} (${participant.phone}) - ${getErrorDescription("0")}`,
+              action: "sms_sent",
+              details: `SMS отправлено: ${participant.fullName} (${participant.phone}) - ${getErrorDescription("0")}`,
               result: "success",
               apiRequest: smsResult.request,
               apiResponse: smsResult.response,
