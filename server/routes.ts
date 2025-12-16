@@ -122,8 +122,31 @@ export async function registerRoutes(
   // Nested routes for staff groups
   app.get("/api/staff-groups/:id/participants", isAuthenticated, async (req, res) => {
     try {
-      const participants = await storage.getParticipantsByStaffGroupId(req.params.id);
-      res.json(participants);
+      const participantsList = await storage.getParticipantsByStaffGroupId(req.params.id);
+      const allNotifications = await storage.getNotificationsByStaffGroupId(req.params.id);
+      
+      const participantsWithNotifications = participantsList.map(participant => {
+        const participantNotifications = allNotifications
+          .filter(n => n.participantId === participant.id)
+          .sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA;
+          });
+        
+        const scheduledNotification = participantNotifications.find(n => n.status === "scheduled");
+        const lastSentNotification = participantNotifications.find(n => 
+          n.status === "delivered" || n.status === "error" || n.status === "sending" || n.status === "pending"
+        );
+        
+        return {
+          ...participant,
+          scheduledNotification: scheduledNotification || null,
+          lastNotification: lastSentNotification || null,
+        };
+      });
+      
+      res.json(participantsWithNotifications);
     } catch (error) {
       console.error("Error fetching participants:", error);
       res.status(500).json({ message: "Failed to fetch participants" });

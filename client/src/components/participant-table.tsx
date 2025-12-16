@@ -33,6 +33,7 @@ import type { Participant, Notification } from "@shared/schema";
 
 interface ParticipantWithNotification extends Participant {
   lastNotification?: Notification | null;
+  scheduledNotification?: Notification | null;
 }
 
 interface ParticipantTableProps {
@@ -172,7 +173,9 @@ export function ParticipantTable({
                 <span className="font-mono text-sm">{participant.phone}</span>
               </TableCell>
               <TableCell>
-                {participant.lastNotification ? (
+                {participant.scheduledNotification ? (
+                  <StatusBadge status="scheduled" />
+                ) : participant.lastNotification ? (
                   <StatusBadge status={participant.lastNotification.status} />
                 ) : (
                   <div className="flex items-center gap-2">
@@ -182,7 +185,15 @@ export function ParticipantTable({
                 )}
               </TableCell>
               <TableCell>
-                {participant.lastNotification?.sentAt ? (
+                {participant.scheduledNotification?.scheduledAt ? (
+                  <span className="text-sm text-muted-foreground">
+                    {format(
+                      new Date(participant.scheduledNotification.scheduledAt),
+                      "dd MMM yyyy, HH:mm",
+                      { locale: ru }
+                    )}
+                  </span>
+                ) : participant.lastNotification?.sentAt ? (
                   <span className="text-sm text-muted-foreground">
                     {format(
                       new Date(participant.lastNotification.sentAt),
