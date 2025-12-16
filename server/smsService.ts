@@ -1,7 +1,7 @@
 // SMS-PROSTO API integration
 import axios from "axios";
 
-const SMS_API_URL = "http://api.sms-prosto.ru";
+const SMS_API_URL = "https://ssl.bs00.ru";
 const SMS_API_KEY = process.env.SMS_API_KEY || "";
 const SMS_SENDER = process.env.SMS_SENDER || "ASU-MINENERGO";
 
