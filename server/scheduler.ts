@@ -29,7 +29,7 @@ export function startScheduler() {
         const result = await sendSms(participant.phone, notification.message);
 
         if (result.success) {
-          await storage.updateNotificationStatus(notification.id, "sending", {
+          await storage.updateNotificationStatus(notification.id, "sent", {
             sentAt: new Date(),
             smsId: result.smsId,
             apiResponse: result.response,
@@ -70,8 +70,8 @@ export function startScheduler() {
   // Check SMS delivery status every 2 minutes
   cron.schedule("*/2 * * * *", async () => {
     try {
-      // Get notifications that are in "sending" status (no limit)
-      const sendingNotifications = (await storage.getSendingNotifications()).filter(
+      // Get notifications that are in "sent" status awaiting delivery confirmation
+      const sendingNotifications = (await storage.getSentNotifications()).filter(
         (n) => n.smsId
       );
 

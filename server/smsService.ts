@@ -169,11 +169,13 @@ export function mapSmsStatusToNotificationStatus(apiStatus: string): string {
     case "delivered":
       return "delivered";
     case "pending":
-      return "sending";
+      return "sent";
+    case "sent":
+      return "sent";
     case "error":
       return "error";
     default:
-      return "sending";
+      return "sent";
   }
 }
 
@@ -221,7 +223,7 @@ export interface BalanceResult {
 export async function getBalance(): Promise<BalanceResult> {
   try {
     const params = new URLSearchParams({
-      method: "get_balance",
+      method: "get_profile",
       key: SMS_API_KEY,
       format: "json",
     });
@@ -237,9 +239,10 @@ export async function getBalance(): Promise<BalanceResult> {
       const respData = data.response.data;
       
       if (msgData && (msgData.err_code === "0" || msgData.err_code === 0)) {
+        // get_profile returns credits field for balance
         return {
           success: true,
-          balance: parseFloat(respData?.balance || respData?.credits || "0"),
+          balance: parseFloat(respData?.credits || "0"),
         };
       } else if (msgData) {
         return {

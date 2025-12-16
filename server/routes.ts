@@ -339,7 +339,7 @@ export async function registerRoutes(
           const smsResult = await sendSms(participant.phone, message);
 
           if (smsResult.success) {
-            await storage.updateNotificationStatus(notification.id, "sending", {
+            await storage.updateNotificationStatus(notification.id, "sent", {
               sentAt: new Date(),
               smsId: smsResult.smsId,
               apiResponse: smsResult.response,
