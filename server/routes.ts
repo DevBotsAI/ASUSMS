@@ -20,6 +20,11 @@ export async function registerRoutes(
   // Start SMS scheduler
   startScheduler();
 
+  // Health check endpoint (для Docker/Kubernetes)
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   // ===== Staff Groups =====
   app.get("/api/staff-groups", isAuthenticated, async (req, res) => {
     try {
