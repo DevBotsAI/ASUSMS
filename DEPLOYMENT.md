@@ -72,13 +72,7 @@ docker-compose ps
 docker-compose logs -f app
 ```
 
-### 4. Инициализация базы данных
-
-При первом запуске выполните миграции:
-
-```bash
-docker-compose exec app npm run db:push
-```
+> **Примечание:** Миграции базы данных запускаются **автоматически** при старте контейнера. Не нужно выполнять их вручную.
 
 ## Развёртывание без Docker
 
@@ -117,6 +111,10 @@ export PORT="5000"
 ### 5. Миграция базы данных
 
 ```bash
+# Применить миграции из папки migrations/
+npx tsx server/migrate.ts
+
+# Или использовать push (для разработки)
 npm run db:push
 ```
 
@@ -152,6 +150,30 @@ curl http://localhost:5000/api/health
 # {"status":"ok","timestamp":"2024-12-17T12:00:00.000Z"}
 ```
 
+## Миграции базы данных
+
+Файлы миграций находятся в папке `migrations/`:
+
+```
+migrations/
+  ├── 0000_rainy_black_crow.sql   # Начальная миграция
+  ├── meta/
+  │   ├── _journal.json           # Журнал миграций
+  │   └── 0000_snapshot.json      # Снимок схемы
+```
+
+### Генерация новых миграций
+
+При изменении схемы в `shared/schema.ts`:
+
+```bash
+# Генерация SQL миграции
+npx drizzle-kit generate
+
+# Применение миграций
+npx tsx server/migrate.ts
+```
+
 ## Обновление
 
 ```bash
@@ -161,11 +183,8 @@ docker-compose down
 # Получение обновлений
 git pull
 
-# Пересборка и запуск
+# Пересборка и запуск (миграции применятся автоматически)
 docker-compose up -d --build
-
-# Миграция (если есть изменения схемы)
-docker-compose exec app npm run db:push
 ```
 
 ## Резервное копирование

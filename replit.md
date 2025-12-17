@@ -36,7 +36,7 @@ The frontend follows a component-based architecture with:
 ### Backend Architecture
 - **Framework**: Express.js with TypeScript
 - **Database ORM**: Drizzle ORM with PostgreSQL
-- **Authentication**: Replit OpenID Connect (OIDC) with Passport.js
+- **Authentication**: Local username/password with bcrypt (Passport.js LocalStrategy)
 - **Session Management**: express-session with PostgreSQL store (connect-pg-simple)
 - **Task Scheduling**: node-cron for scheduled SMS sending
 
@@ -49,7 +49,7 @@ API routes follow RESTful conventions:
 
 ### Data Models
 Core entities defined in `shared/schema.ts`:
-- **users** - Authenticated operators (Replit Auth)
+- **users** - Authenticated operators (local auth with bcrypt)
 - **staffGroups** - Organizational groups (штабы)
 - **participants** - Group members with phone numbers
 - **notifications** - SMS messages with status tracking
@@ -71,11 +71,16 @@ A background scheduler runs every minute to:
 
 ### Third-Party Services
 - **SMS-PROSTO API** - SMS gateway for message delivery (requires `SMS_API_KEY` and `SMS_SENDER` environment variables)
-- **Replit Auth** - OpenID Connect authentication via Replit (requires `ISSUER_URL`, `REPL_ID`, `SESSION_SECRET`)
 
 ### Database
 - **PostgreSQL** - Primary data store (requires `DATABASE_URL` environment variable)
-- Schema migrations managed via Drizzle Kit (`npm run db:push`)
+- Schema migrations managed via Drizzle Kit (`npx drizzle-kit generate` + `npx tsx server/migrate.ts`)
+- Migration files stored in `migrations/` folder
+
+### Deployment
+- **Docker**: Multi-stage Dockerfile with automatic migrations on startup
+- **Standalone**: Node.js 20+ with manual migration execution
+- See `DEPLOYMENT.md` for detailed instructions
 
 ### Key NPM Packages
 - `drizzle-orm` / `drizzle-kit` - Database ORM and migrations
@@ -83,5 +88,5 @@ A background scheduler runs every minute to:
 - `axios` - HTTP client for SMS API
 - `node-cron` - Background task scheduling
 - `xlsx` - Excel file parsing for participant imports
-- `passport` / `openid-client` - Authentication
+- `passport` / `passport-local` / `bcryptjs` - Local authentication
 - `zod` - Schema validation (shared between frontend and backend)

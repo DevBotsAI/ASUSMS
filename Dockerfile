@@ -20,18 +20,31 @@ RUN npm run build
 # Этап 2: Production образ
 FROM node:20-alpine AS production
 
+# Устанавливаем postgresql-client для pg_isready и tsx для миграций
+RUN apk add --no-cache postgresql-client
+
 WORKDIR /app
 
-# Устанавливаем только production зависимости
+# Копируем package.json и устанавливаем зависимости
 COPY package.json package-lock.json ./
 RUN npm ci --only=production
 
+# Устанавливаем tsx для запуска миграций (TypeScript)
+RUN npm install tsx --save-dev
+
 # Копируем собранные файлы
 COPY --from=builder /app/dist ./dist
+
+# Копируем серверный код и миграции
 COPY --from=builder /app/server ./server
 COPY --from=builder /app/shared ./shared
+COPY --from=builder /app/migrations ./migrations
 COPY drizzle.config.ts ./
 COPY tsconfig.json ./
+
+# Копируем entrypoint скрипт
+COPY script/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Переменные окружения
 ENV NODE_ENV=production
@@ -41,8 +54,8 @@ ENV PORT=5000
 EXPOSE 5000
 
 # Healthcheck
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:5000/api/health || exit 1
 
-# Запуск приложения
-CMD ["npm", "start"]
+# Запуск через entrypoint
+ENTRYPOINT ["docker-entrypoint.sh"]
