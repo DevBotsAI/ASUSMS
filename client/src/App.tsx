@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { useAuth } from "@/hooks/useAuth";
-import Landing from "@/pages/landing";
+import AuthPage from "@/pages/auth-page";
 import Dashboard from "@/pages/dashboard";
 import StaffDetail from "@/pages/staff-detail";
 import EventLogs from "@/pages/event-logs";
@@ -52,7 +52,7 @@ function Router() {
   }
 
   if (!isAuthenticated) {
-    return <Landing />;
+    return <AuthPage />;
   }
 
   return <AuthenticatedLayout />;

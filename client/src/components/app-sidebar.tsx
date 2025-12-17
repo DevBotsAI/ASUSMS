@@ -35,15 +35,35 @@ import {
   Plus,
   FileText,
   LayoutDashboard,
+  LogOut,
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import type { StaffGroupWithParticipants } from "@shared/schema";
 
 export function AppSidebar() {
   const [location] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupDescription, setNewGroupDescription] = useState("");
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/auth/logout");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      window.location.href = "/";
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось выйти из системы",
+        variant: "destructive",
+      });
+    },
+  });
 
   const { data: staffGroups = [], isLoading } = useQuery<StaffGroupWithParticipants[]>({
     queryKey: ["/api/staff-groups"],
@@ -208,8 +228,22 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t p-4">
-        <div className="text-xs text-muted-foreground text-center">
-          Министерство энергетики
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col min-w-0">
+            <span className="text-sm font-medium truncate">
+              {(user as any)?.username || (user as any)?.firstName || "Пользователь"}
+            </span>
+            <span className="text-xs text-muted-foreground">Минэнерго</span>
+          </div>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => logoutMutation.mutate()}
+            disabled={logoutMutation.isPending}
+            data-testid="button-logout"
+          >
+            <LogOut className="w-4 h-4" />
+          </Button>
         </div>
       </SidebarFooter>
     </Sidebar>
